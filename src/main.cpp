@@ -205,7 +205,7 @@ int main(int argc, char* argv[]) {
     float x_estimate_ = ukf.x_(0);
     float y_estimate_ = ukf.x_(1);
     float vx_estimate_ = ukf.x_(2) * cos(ukf.x_(3));
-    float vy_estimate_ = ukf.x_(2) * sin(ukf.x_(3));
+    float vy_estimate_ = ukf.x_(3) * sin(ukf.x_(3));
     
     ukf_x_cartesian_ << x_estimate_, y_estimate_, vx_estimate_, vy_estimate_;
     
