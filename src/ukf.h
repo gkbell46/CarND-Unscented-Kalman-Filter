@@ -74,6 +74,20 @@ public:
   ///* the current NIS for laser
   double NIS_laser_;
 
+  ///* Sigma points to be predicted
+  int sigma_points;
+  
+  ///* R matrix for radar
+  MatrixXd R_radar;
+  
+  ///* R matrix for laser
+  MatrixXd R_laser;
+  
+  ///* Set measurement dimension, radar can measure r, phi and r_dot
+  int n_z_radar_;
+  
+  // Set measurment dimension, laser can measure x, y
+  int n_z_laser_;
   /**
    * Constructor
    */
