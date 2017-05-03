@@ -11,21 +11,21 @@ int g_count=0;
 
 inline double constrainAngle(double x)
 {
-     while (x > M_PI)  x -= 2.*M_PI;
-     while (x < -M_PI) x += 2.*M_PI;
+    /* while (x > M_PI)  x -= 2.*M_PI;
+     while (x < -M_PI) x += 2.*M_PI;*/
      
-     /* Alternate normalization techniques */    
-     /*x = fmod(x,2.*M_PI);
+     /* Alternate normalization techniques*/    
+     x = fmod(x+M_PI, 2.*M_PI);
       if (x<0)
         x+=2.*M_PI;
-
+      x = x- M_PI; 
      /* if (fabs(x) > M_PI)
       {
 	x -= round(x/(2.0*M_PI)) * (2.0*M_PI);
       }*/
       
-      //if(x > M_PI) x -= round(x/(2.*M_PI))*2.*M_PI;
-      //if(x < -M_PI) x += round(x/(2.*M_PI))*2.*M_PI;
+     // if(x > M_PI) x -= round(x/(2.*M_PI))*2.*M_PI;
+     // if(x < -M_PI) x += round(x/(2.*M_PI))*2.*M_PI;
  
     return x;
 }
@@ -42,9 +42,9 @@ UKF::UKF() {
 
   std_a_ = 0.2811;  	// Process noise standard deviation longitudinal acceleration in m/s^2
   std_yawdd_ = 0.331;     // Process noise standard deviation yaw acceleration in rad/s^2
-  std_laspx_ = 0.0599;	// Laser measurement noise standard deviation position1 in m
-  std_laspy_ = 0.0537;   // Laser measurement noise standard deviation position2 in m
-  std_radr_ = 1.28632;	// Radar measurement noise standard deviation radius in m
+  std_laspx_ = 0.15;	// Laser measurement noise standard deviation position1 in m
+  std_laspy_ = 0.15;   // Laser measurement noise standard deviation position2 in m
+  std_radr_ = 0.3;	// Radar measurement noise standard deviation radius in m
   std_radphi_ = 0.03;	// Radar measurement noise standard deviation angle in rad
   std_radrd_ = 0.3;	// Radar measurement noise standard deviation radius change in m/s
   use_laser_ = true;	// If this is false, laser measurements will ne ignored (except during init)
@@ -117,11 +117,11 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   	//done initializing , no need to predict or update
 	is_initialized_ = true;
 
-	P_ << 1000.0, -1.0, 0.0, 1.0, -0.0020,
-	      1.0, 5.9, 0.05, 0.5, 0.06,
-	      -0.955, 0.22, 0.95, 0.0, 0.0,
-	      -10.0, 0.05, 0.0, 0.1, 0.0,
-	      -5.0, 0.0, 0.0, 0.0, 0.5;
+	P_ << 1.0 , 0.0 , 0.0 , 0.0 , 0.0 ,
+	      0.0 , 1.0 , 0.0 , 0.0 , 0.0 ,
+	      0.0 , 0.0 , 1.0 , 0.0 , 0.0 ,
+	      0.0 , 0.0 , 0.0 , 1.0 , 0.0 ,
+	      0.0 , 0.0 , 0.0 , 0.0 , 1.0 ;
 
 	double rho = meas_package.raw_measurements_[0];
 	double phi = meas_package.raw_measurements_[1];
@@ -131,15 +131,13 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
 	{
 		px = rho * cos(phi);
 		py = rho * sin(phi);
-		yaw = meas_package.raw_measurements_[2];
 		
 	}
 	else if (meas_package.sensor_type_ == MeasurementPackage::LASER)
 	{
 		px = meas_package.raw_measurements_[0];
 		py = meas_package.raw_measurements_[1];
-		yaw = 0;
-		phi =0;		
+
 	}
 	if (fabs(px) < 0.001)
 	{
@@ -149,7 +147,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
 	{
 		py = 0.001;
 	} 
-	x_ << px,py,yaw,0,0;
+	x_ << px,py,0,0,0;
 
 	// Calculating R
 	 R_radar = MatrixXd(n_z_radar_,n_z_radar_);
@@ -269,13 +267,13 @@ void UKF::Prediction(double delta_t) {
   // write predicted sigma points into the right column
   for (int i=0; i < sigma_points ; i++)
   {
-  	double p_x_ = Xsig_aug_(0,i);
-  	double p_y_ = Xsig_aug_(1,i);
-  	double vk_ = Xsig_aug_(2,i);
-  	double yaw_ = Xsig_aug_(3,i);
-  	double yawd_ = Xsig_aug_(4,i);
-  	double n_a_ = Xsig_aug_(5,i);
-  	double n_yawdd_ = Xsig_aug_(6,i);
+  	const double p_x_ = Xsig_aug_(0,i);
+  	const double p_y_ = Xsig_aug_(1,i);
+  	const double vk_ = Xsig_aug_(2,i);
+  	const double yaw_ = Xsig_aug_(3,i);
+  	const double yawd_ = Xsig_aug_(4,i);
+  	const double n_a_ = Xsig_aug_(5,i);
+  	const double n_yawdd_ = Xsig_aug_(6,i);
   	
   	double px_p, py_p=0;
   	
@@ -307,6 +305,7 @@ void UKF::Prediction(double delta_t) {
   	Xsig_pred_(1,i) = py_p;
   	Xsig_pred_(2,i) = v_p_;
   	Xsig_pred_(3,i) = yaw_p_;
+  	/////Xsig_pred_(3,i)  = constrainAngle(Xsig_pred_(3,i));		// Angel normalization
   	Xsig_pred_(4,i) = yawd_p_;
 
   }
